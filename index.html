@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stok Gudang</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Dashboard gudang: panel gelap baja + kuning safety, sama dengan aplikasi desktop */
+  :root {
+    --bg: #f3f4f5; --card: #ffffff; --ink: #1b2228; --muted: #5f6b74; --line: #e3e6e8;
+    --slate: #22303a; --slate-2: #2c3d49; --accent: #f2b705; --accent-ink: #1b2228;
+    --ok: #0f7b3f; --ok-bg: #e6f4ea; --warn: #8a6200; --warn-bg: #fff4ce; --bad: #b3261e; --bad-bg: #fde7e9;
+    --font: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    --r: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; }
+  body { -webkit-font-smoothing: antialiased; }
+  button, input { font: inherit; color: inherit; }
+  .num { font-variant-numeric: tabular-nums; }
+  [hidden] { display: none !important; }
+
+  /* ---------- login ---------- */
+  .login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+           background: radial-gradient(1200px 500px at 50% -10%, var(--slate-2), var(--slate)); }
+  .login-card { width: 100%; max-width: 360px; background: var(--card); border-radius: 16px; padding: 28px 24px 24px;
+                box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  .brand { font-weight: 800; letter-spacing: .5px; font-size: 22px; color: var(--accent); }
+  .login-card .brand { color: var(--slate); }
+  .login-card .brand span { color: var(--accent); }
+  .login-card h1 { font-size: 15px; font-weight: 600; color: var(--muted); margin: 4px 0 22px; }
+  .login-card label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .pin { width: 100%; margin-top: 6px; padding: 12px 14px; font-size: 22px; letter-spacing: 8px; text-align: center;
+         border: 1.5px solid var(--line); border-radius: 10px; outline: none; }
+  .pin:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(242,183,5,.25); }
+  .ingat { display: flex; align-items: center; gap: 8px; margin: 14px 0 18px; font-size: 13px; color: var(--muted); }
+  .btn { border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 700; cursor: pointer; }
+  .btn-accent { background: var(--accent); color: var(--accent-ink); width: 100%; }
+  .btn-accent:hover { filter: brightness(1.05); }
+  .btn:focus-visible, .tab:focus-visible, .icon-btn:focus-visible { outline: 3px solid rgba(242,183,5,.6); outline-offset: 2px; }
+  .err { color: var(--bad); font-size: 13px; min-height: 18px; margin-top: 10px; text-align: center; }
+
+  /* ---------- top bar ---------- */
+  .top { background: var(--slate); color: #fff; position: sticky; top: 0; z-index: 5; }
+  .top-in { max-width: 1180px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .top .co { font-size: 12.5px; color: #c9d3da; line-height: 1.2; }
+  .top .grow { flex: 1; min-width: 0; }
+  .icon-btn { background: var(--slate-2); border: 0; color: #fff; border-radius: 9px; padding: 8px 12px;
+              font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .icon-btn:hover { background: #364856; }
+  .icon-btn svg { width: 16px; height: 16px; }
+  .spin svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 16px 16px 40px; }
+  .fresh { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+  .banner { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13.5px;
+            margin-bottom: 14px; font-weight: 600; }
+
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 22px 0 10px; font-weight: 700; }
+
+  /* ---------- kartu stok ---------- */
+  .stok-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .stok { background: var(--card); border-radius: var(--r); padding: 14px 16px; border: 1px solid var(--line);
+          display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .stok .nm { font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+  .stok .val { font-size: 30px; font-weight: 800; line-height: 1.1; }
+  .stok .val small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+  .stok .sub { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+  .h2row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .h2sub { text-transform: none; letter-spacing: 0; font-weight: 600; }
+  .linkbtn { border: 0; background: none; color: #1f5f8b; font-weight: 700; font-size: 13px; cursor: pointer; padding: 4px 0; }
+  .linkbtn:hover { text-decoration: underline; }
+  .stok.bad { border-color: #f3b8bd; } .stok.bad .val { color: var(--bad); }
+  .stok.warn { border-color: #f1d77e; } .stok.warn .val { color: var(--warn); }
+  .chip { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 700; align-self: flex-start; }
+  .chip.ok { background: var(--ok-bg); color: var(--ok); } .chip.warn { background: var(--warn-bg); color: var(--warn); }
+  .chip.bad { background: var(--bad-bg); color: var(--bad); } .chip.mute { background: #eef0f2; color: var(--muted); }
+
+  /* ---------- ringkasan ---------- */
+  .kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .k { background: var(--slate); color: #fff; border-radius: var(--r); padding: 14px 16px; min-width: 0; }
+  .k .lbl { font-size: 12px; color: #c9d3da; font-weight: 600; }
+  .k .v { font-size: 24px; font-weight: 800; margin-top: 4px; overflow-wrap: anywhere; }
+  .k .s { font-size: 12px; color: #9fb0bb; margin-top: 2px; }
+  .k.acc .v { color: var(--accent); }
+
+  /* ---------- tab & tabel ---------- */
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 24px 0 10px; }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; flex: 1 1 auto; padding-bottom: 2px; scrollbar-width: none; }
+  .tab { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: 7px 14px; font-size: 13px;
+         font-weight: 600; white-space: nowrap; cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--slate); color: #fff; border-color: var(--slate); }
+  .tab .n { margin-left: 6px; font-size: 11px; background: rgba(0,0,0,.08); padding: 1px 6px; border-radius: 99px; }
+  .tab[aria-selected="true"] .n { background: var(--accent); color: var(--accent-ink); }
+  .cari { flex: 0 1 240px; min-width: 160px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  .cari:focus { outline: none; border-color: var(--accent); }
+  .tbl-wrap { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 700; padding: 10px 12px; border-bottom: 1px solid var(--line);
+       background: #fafbfb; white-space: nowrap; position: sticky; top: 0; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f0f2f3; vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.r, th.r { text-align: right; white-space: nowrap; }
+  td.nw { white-space: nowrap; }
+  tr.total td { font-weight: 800; background: #fafbfb; }
+  tr.row-bad td { background: #fff7f8; } tr.row-warn td { background: #fffbea; }
+  .kosong { padding: 26px; text-align: center; color: var(--muted); }
+  .cards { display: none; }
+  .rc { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+  .rc + .rc { margin-top: 8px; }
+  .rc.total { background: #fafbfb; font-weight: 800; }
+  .rc.row-bad { border-color: #f3b8bd; background: #fff7f8; } .rc.row-warn { border-color: #f1d77e; background: #fffbea; }
+  .rc-h { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-weight: 700; }
+  .rc-h .d { font-size: 12.5px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .rc-s { font-size: 14px; margin-top: 2px; overflow-wrap: anywhere; }
+  .rc dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 8px 0 0; font-size: 13px; }
+  .rc dt { color: var(--muted); } .rc dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+  .ket { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 28px; }
+
+  @media (max-width: 640px) {
+    .kpi { grid-template-columns: 1fr 1fr; }
+    .kpi .k:last-child { grid-column: span 2; }
+    .stok-grid { grid-template-columns: 1fr 1fr; }
+    .stok .val { font-size: 26px; }
+    .cari { flex: 1 1 100%; }
+    .top .lbl-btn { display: none; }
+    .tbl-wrap { display: none; }
+    .cards { display: block; }
+  }
+  @media (prefers-reduced-motion: reduce) { .spin svg { animation: none; } }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<section class="login" id="v-login">
+  <form class="login-card" id="f-login" autocomplete="off">
+    <div class="brand">GUDANG<span>.</span></div>
+    <h1 id="login-co">Dashboard stok</h1>
+    <label for="pin">PIN</label>
+    <input class="pin num" id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12" required>
+    <label class="ingat"><input type="checkbox" id="ingat" checked> Ingat di perangkat ini</label>
+    <button class="btn btn-accent" id="b-masuk" type="submit">Masuk</button>
+    <div class="err" id="login-err" role="alert"></div>
+  </form>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="v-dash" hidden>
+  <header class="top">
+    <div class="top-in">
+      <div class="brand">GUDANG</div>
+      <div class="grow"><div class="co" id="co"></div></div>
+      <button class="icon-btn" id="b-refresh" type="button" title="Muat ulang data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+        <span class="lbl-btn">Muat ulang</span>
+      </button>
+      <button class="icon-btn" id="b-keluar" type="button" title="Keluar">Keluar</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="fresh"><span class="dot" id="dot"></span><span id="fresh"></span></div>
+    <div class="banner" id="banner" hidden></div>
+
+    <div class="h2row"><h2 id="stok-judul">Stok barang terlaris <span class="h2sub">· 30 hari terakhir</span></h2>
+      <button class="linkbtn" id="stok-semua" type="button" hidden>Lihat semua barang ?</button></div>
+    <div class="stok-grid" id="stok"></div>
+
+    <h2>Ringkasan</h2>
+    <div class="kpi" id="kpi"></div>
+
+    <div class="bar">
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <input class="cari" id="cari" type="search" placeholder="Cari customer, nomor, barang…" aria-label="Cari">
+    </div>
+    <div class="tbl-wrap"><table id="tbl"></table></div>
+    <div class="cards" id="cards"></div>
+    <div class="ket" id="ket"></div>
+    <footer>Hanya untuk dilihat. Data dikirim otomatis dari aplikasi gudang.</footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const fmt = new Intl.NumberFormat('id-ID');
+  const BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const TAB_URUT = ['Barang Keluar', 'Belum Ditagih', 'Barang Masuk', 'Invoice', 'Per Customer Bulan Ini', 'Stok'];
+  let PIN = '', DATA = null, TAB = 'Barang Keluar', timer = null;
+
+  const simpan = {
+    get() { try { return localStorage.getItem('gudang_pin') || ''; } catch (e) { return ''; } },
+    set(v) { try { v ? localStorage.setItem('gudang_pin', v) : localStorage.removeItem('gudang_pin'); } catch (e) {} }
+  };
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const angka = (v) => (typeof v === 'number' ? fmt.format(Math.round(v * 100) / 100) : esc(v));
+  const rp = (v) => (typeof v === 'number' ? 'Rp ' + fmt.format(Math.round(v)) : esc(v));
+  const tgl = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? `${+m[3]} ${BULAN[+m[2]-1]} ${m[1]}` : esc(s); };
+
+  // Di Apps Script: google.script.run. Di GitHub Pages / hosting lain: minta ke link web app (…/exec) dengan PIN.
+  const API = '__API_URL__';
+  function ambil(pin, onOk, onErr) {
+    const hasil = function (res) {
+      if (res && res.ok) onOk(res.data); else onErr((res && res.error) || 'Gagal memuat data.');
+    };
+    const gagal = function () { onErr('Tidak bisa terhubung. Periksa internet lalu coba lagi.'); };
+    if (window.google && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(hasil).withFailureHandler(gagal).ambilData(pin);
+      return;
+    }
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(API)) {
+      onErr('Link web app belum diisi. Buat ulang file dashboard dari aplikasi gudang (menu Google Sheets).');
+      return;
+    }
+    // text/plain supaya browser tidak mengirim preflight (Apps Script tidak melayani OPTIONS)
+    fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                 body: JSON.stringify({ aksi: 'ambil', pin: pin }) })
+      .then(function (r) { return r.json(); })
+      .then(hasil)
+      .catch(function () { onErr('Tidak bisa terhubung ke Google. Pastikan Code.gs sudah versi terbaru ' +
+                                 '(Deploy ? Manage deployments ? New version).'); });
+  }
+
+  // ---------------- login
+  $('f-login').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    const pin = $('pin').value.trim();
+    $('login-err').textContent = '';
+    $('b-masuk').textContent = 'Memeriksa…'; $('b-masuk').disabled = true;
+    ambil(pin, function (d) {
+      PIN = pin; simpan.set($('ingat').checked ? pin : '');
+      tampil(d);
+    }, function (msg) {
+      $('login-err').textContent = msg; $('b-masuk').textContent = 'Masuk'; $('b-masuk').disabled = false;
+      $('pin').select();
+    });
+  });
+  $('b-keluar').addEventListener('click', function () {
+    simpan.set(''); PIN = ''; DATA = null; clearInterval(timer);
+    $('pin').value = ''; $('b-masuk').textContent = 'Masuk'; $('b-masuk').disabled = false;
+    $('v-dash').hidden = true; $('v-login').hidden = false; $('pin').focus();
+  });
+  $('b-refresh').addEventListener('click', muatUlang);
+  $('cari').addEventListener('input', gambarTabel);
+  $('stok-semua').addEventListener('click', function () {
+    TAB = 'Stok'; $('cari').value = ''; gambarTabs(); gambarTabel();
+    $('tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  function muatUlang() {
+    if (!PIN) return;
+    $('b-refresh').classList.add('spin');
+    ambil(PIN, function (d) { $('b-refresh').classList.remove('spin'); tampil(d); },
+          function () { $('b-refresh').classList.remove('spin'); });
+  }
+
+  // ---------------- dashboard
+  function lembar(nama) { return (DATA.sheets || []).find((s) => s.nama === nama) || { kolom: [], baris: [], angka: [], rupiah: [] }; }
+
+  function tampil(d) {
+    DATA = d;
+    $('v-login').hidden = true; $('v-dash').hidden = false;
+    $('co').textContent = d.perusahaan || '';
+    document.title = 'Stok Gudang · ' + (d.perusahaan || '');
+    kesegaran(); gambarStok(); gambarKpi(); gambarTabs(); gambarTabel();
+    clearInterval(timer); timer = setInterval(muatUlang, 120000);  // muat ulang tiap 2 menit
+  }
+
+  function kesegaran() {
+    let teks = 'Diperbarui ' + (DATA.waktu || '-');
+    const t = DATA.waktu_ms ? new Date(DATA.waktu_ms) : null;
+    let telat = false;
+    if (t && !isNaN(t)) {
+      const menit = Math.round((Date.now() - t.getTime()) / 60000);
+      teks += menit < 1 ? ' (baru saja)' : menit < 60 ? ` (${menit} menit lalu)` : ` (${Math.floor(menit / 60)} jam lalu)`;
+      telat = menit > 120;
+    }
+    $('fresh').textContent = teks + ' · dari komputer gudang';
+    $('dot').style.background = telat ? 'var(--warn)' : 'var(--ok)';
+    $('banner').hidden = !telat;
+    $('banner').textContent = 'Data belum diperbarui lebih dari 2 jam. Komputer gudang mungkin mati, offline, atau aplikasinya ditutup.';
+  }
+
+  function gambarStok() {
+    // hanya 3 barang paling laris (paling banyak keluar 30 hari terakhir); RFID tidak dihitung
+    const s = lembar('Stok');
+    const iKeluar = s.kolom.indexOf('Keluar 30 hari');
+    const keluar = (r) => (iKeluar >= 0 && typeof r[iKeluar] === 'number' ? r[iKeluar] : 0);
+    // barang pilihan dari aplikasi gudang (kolom "Kartu dashboard" = urutan); kalau kosong -> 3 terlaris
+    const iKartu = s.kolom.indexOf('Kartu dashboard');
+    const urutan = (r) => (iKartu >= 0 && typeof r[iKartu] === 'number' ? r[iKartu] : 0);
+    const dipilih = s.baris.filter((r) => urutan(r) > 0).sort((a, b) => urutan(a) - urutan(b));
+    const pilih = dipilih.length ? dipilih : s.baris.filter((r) => r[6] !== 'RFID')
+      .map((r, i) => ({ r: r, i: i }))
+      .sort((a, b) => keluar(b.r) - keluar(a.r) || a.i - b.i)
+      .slice(0, 3).map((x) => x.r);
+    $('stok-judul').innerHTML = dipilih.length ? 'Stok barang utama'
+      : 'Stok barang terlaris <span class="h2sub">· 30 hari terakhir</span>';
+    $('stok').innerHTML = pilih.map(function (r) {
+      // [kode, nama, satuan, stok, min, status, keterangan, dijual sebagai, keluar 30 hari]
+      const st = r[5], cls = st === 'Habis' ? 'bad' : st === 'Menipis' ? 'warn' : '';
+      const chip = st === 'Habis' ? 'bad' : st === 'Menipis' ? 'warn' : 'ok';
+      const sub = iKeluar >= 0 ? 'Keluar 30 hari: ' + angka(keluar(r)) + ' ' + esc(r[2]) : '';
+      return `<div class="stok ${cls}"><div class="nm">${esc(r[1])}</div>
+        <div class="val num">${angka(r[3])}<small>${esc(r[2])}</small></div>
+        <span class="chip ${chip}">${esc(st)}</span>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`;
+    }).join('') || '<div class="kosong">Belum ada barang gudang.</div>';
+    const lain = s.baris.length - pilih.length;
+    $('stok-semua').hidden = lain <= 0;
+    $('stok-semua').textContent = `Lihat semua ${s.baris.length} barang ?`;
+  }
+
+  function gambarKpi() {
+    const hariIni = new Date(); const d30 = new Date(hariIni.getTime() - 30 * 864e5);
+    const iso = (x) => x.toISOString().slice(0, 10);
+    const keluar = lembar('Barang Keluar').baris.filter((r) => r[0] >= iso(d30));
+    const qty = keluar.reduce((a, r) => a + (typeof r[4] === 'number' ? r[4] : 0), 0);
+    const bt = lembar('Belum Ditagih').baris;
+    const tertua = bt.reduce((a, r) => Math.max(a, typeof r[4] === 'number' ? r[4] : 0), 0);
+    const bulan = iso(hariIni).slice(0, 7);
+    const inv = lembar('Invoice').baris.filter((r) => String(r[0]).slice(0, 7) === bulan);
+    const omzet = inv.reduce((a, r) => a + (typeof r[6] === 'number' ? r[6] : 0), 0);
+    $('kpi').innerHTML = `
+      <div class="k"><div class="lbl">Pengiriman 30 hari</div><div class="v num">${fmt.format(keluar.length)} SJ</div>
+        <div class="s num">${fmt.format(qty)} barang keluar</div></div>
+      <div class="k"><div class="lbl">Belum ditagih</div><div class="v num">${fmt.format(bt.length)} SJ</div>
+        <div class="s">${bt.length ? 'tertua ' + tertua + ' hari' : 'semua sudah ditagih'}</div></div>
+      <div class="k acc"><div class="lbl">Invoice bulan ini</div><div class="v num">${rp(omzet)}</div>
+        <div class="s">${inv.length} invoice, termasuk PPN</div></div>`;
+  }
+
+  function gambarTabs() {
+    $('tabs').innerHTML = TAB_URUT.map(function (n) {
+      const jml = lembar(n).baris.filter((r) => r[0] !== 'TOTAL').length;
+      const label = n === 'Per Customer Bulan Ini' ? 'Per Customer' : n;
+      return `<button class="tab" role="tab" type="button" data-t="${esc(n)}" aria-selected="${n === TAB}">${esc(label)}<span class="n num">${jml}</span></button>`;
+    }).join('');
+    $('tabs').querySelectorAll('.tab').forEach((b) => b.addEventListener('click', function () {
+      TAB = b.dataset.t; gambarTabs(); gambarTabel();
+    }));
+  }
+
+  function gambarTabel() {
+    if (!DATA) return;
+    const s = lembar(TAB), q = $('cari').value.trim().toLowerCase();
+    const kanan = new Set([].concat(s.angka || [], s.rupiah || []));
+    const rupiahSet = new Set(s.rupiah || []);
+    const tglIdx = s.kolom.indexOf('Tanggal');
+    const rows = s.baris.filter((r) => !q || r.join(' ').toLowerCase().includes(q));
+    const sorot = {}; (s.sorot || []).forEach((h) => sorot[h[0]] = h[1]);
+    let html = '<thead><tr>' + s.kolom.map((k, i) => `<th class="${kanan.has(i) ? 'r' : ''}">${esc(k)}</th>`).join('') + '</tr></thead><tbody>';
+    if (!rows.length) {
+      html += `<tr><td class="kosong" colspan="${s.kolom.length || 1}">${q ? 'Tidak ada yang cocok dengan "' + esc(q) + '".' : 'Belum ada data.'}</td></tr>`;
+    }
+    rows.forEach(function (r) {
+      const idx = s.baris.indexOf(r);
+      const warna = sorot[idx];
+      const cls = r[0] === 'TOTAL' ? 'total' : warna === '#fde7e9' ? 'row-bad' : warna === '#fff4ce' ? 'row-warn' : '';
+      html += `<tr class="${cls}">` + r.map(function (v, i) {
+        let isi = rupiahSet.has(i) ? rp(v) : kanan.has(i) ? angka(v) : i === tglIdx ? tgl(v) : esc(v);
+        if (s.kolom[i] === 'Invoice' && v === 'Belum ditagih') isi = '<span class="chip warn">Belum ditagih</span>';
+        if (s.kolom[i] === 'Status') isi = `<span class="chip ${v === 'Habis' ? 'bad' : v === 'Menipis' ? 'warn' : 'ok'}">${esc(v)}</span>`;
+        return `<td class="${kanan.has(i) ? 'r num' : i === tglIdx ? 'nw' : ''}">${isi}</td>`;
+      }).join('') + '</tr>';
+    });
+    $('tbl').innerHTML = html + '</tbody>';
+
+    // tampilan HP: setiap baris jadi kartu (judul = kolom nomor / nama, sisanya daftar label: nilai)
+    const sel = (r, i) => (rupiahSet.has(i) ? rp(r[i]) : kanan.has(i) ? angka(r[i]) : i === tglIdx ? tgl(r[i]) : esc(r[i]));
+    const iJudul = s.kolom.findIndex((k) => /^No\.|^Nomor|^Customer$|^Barang Gudang$/.test(k));
+    const iSub = s.kolom.findIndex((k, i) => i !== iJudul && /^Customer$|^Barang$|^Dari$/.test(k));
+    let kartu = rows.map(function (r) {
+      const idx = s.baris.indexOf(r), warna = sorot[idx];
+      const cls = r[0] === 'TOTAL' ? 'total' : warna === '#fde7e9' ? 'row-bad' : warna === '#fff4ce' ? 'row-warn' : '';
+      const jdl = iJudul >= 0 ? sel(r, iJudul) : sel(r, 0);
+      const dl = s.kolom.map((k, i) => (i === iJudul || i === iSub || i === tglIdx || r[i] === '' || r[i] == null) ? ''
+        : `<dt>${esc(k)}</dt><dd class="${kanan.has(i) ? 'num' : ''}">${s.kolom[i] === 'Invoice' && r[i] === 'Belum ditagih'
+            ? '<span class="chip warn">Belum ditagih</span>' : s.kolom[i] === 'Status'
+            ? `<span class="chip ${r[i] === 'Habis' ? 'bad' : r[i] === 'Menipis' ? 'warn' : 'ok'}">${esc(r[i])}</span>` : sel(r, i)}</dd>`).join('');
+      return `<div class="rc ${cls}"><div class="rc-h"><span>${jdl}</span>${tglIdx >= 0 ? `<span class="d">${tgl(r[tglIdx])}</span>` : ''}</div>`
+        + (iSub >= 0 && r[iSub] ? `<div class="rc-s">${esc(r[iSub])}</div>` : '') + (dl ? `<dl>${dl}</dl>` : '') + '</div>';
+    }).join('');
+    $('cards').innerHTML = kartu || `<div class="rc kosong">${q ? 'Tidak ada yang cocok dengan "' + esc(q) + '".' : 'Belum ada data.'}</div>`;
+    $('ket').textContent = (s.keterangan || '').split(' · ')[0].startsWith('Diperbarui') ? '' : (s.keterangan || '').split(' · ')[0];
+  }
+
+  // ---------------- mulai
+  const tersimpan = simpan.get();
+  if (tersimpan) {
+    $('pin').value = tersimpan;
+    $('b-masuk').textContent = 'Memuat…'; $('b-masuk').disabled = true;
+    ambil(tersimpan, function (d) { PIN = tersimpan; tampil(d); }, function (msg) {
+      simpan.set(''); $('pin').value = ''; $('b-masuk').textContent = 'Masuk'; $('b-masuk').disabled = false;
+      $('login-err').textContent = msg;
+    });
+  } else {
+    $('pin').focus();
+  }
+})();
+</script>
+</body>
+</html>
