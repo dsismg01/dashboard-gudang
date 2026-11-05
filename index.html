@@ -169,7 +169,7 @@
     <div class="fresh"><span class="dot" id="dot"></span><span id="fresh"></span></div>
     <div class="banner" id="banner" hidden></div>
 
-    <div class="h2row"><h2 id="stok-judul">Stok barang terlaris <span class="h2sub">· 30 hari terakhir</span></h2>
+    <div class="h2row"><h2 id="stok-judul">Stok barang terlaris <span class="h2sub">Â· 30 hari terakhir</span></h2>
       <button class="linkbtn" id="stok-semua" type="button" hidden>Lihat semua barang ?</button></div>
     <div class="stok-grid" id="stok"></div>
 
@@ -178,7 +178,7 @@
 
     <div class="bar">
       <div class="tabs" id="tabs" role="tablist"></div>
-      <input class="cari" id="cari" type="search" placeholder="Cari customer, nomor, barang…" aria-label="Cari">
+      <input class="cari" id="cari" type="search" placeholder="Cari customer, nomor, barangÂ…" aria-label="Cari">
     </div>
     <div class="tbl-wrap"><table id="tbl"></table></div>
     <div class="cards" id="cards"></div>
@@ -204,8 +204,8 @@
   const rp = (v) => (typeof v === 'number' ? 'Rp ' + fmt.format(Math.round(v)) : esc(v));
   const tgl = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? `${+m[3]} ${BULAN[+m[2]-1]} ${m[1]}` : esc(s); };
 
-  // Di Apps Script: google.script.run. Di GitHub Pages / hosting lain: minta ke link web app (…/exec) dengan PIN.
-  const API = '__API_URL__';
+  // Di Apps Script: google.script.run. Di GitHub Pages / hosting lain: minta ke link web app (Â…/exec) dengan PIN.
+  const API = 'https://script.google.com/macros/s/AKfycbxCUd2wioH2ymly63JItniEFAYCD2Z3xDd75oT2XdOYDO2vyLLgXEaEBlaJv-RBrl2D9A/exec';
   function ambil(pin, onOk, onErr) {
     const hasil = function (res) {
       if (res && res.ok) onOk(res.data); else onErr((res && res.error) || 'Gagal memuat data.');
@@ -233,7 +233,7 @@
     ev.preventDefault();
     const pin = $('pin').value.trim();
     $('login-err').textContent = '';
-    $('b-masuk').textContent = 'Memeriksa…'; $('b-masuk').disabled = true;
+    $('b-masuk').textContent = 'MemeriksaÂ…'; $('b-masuk').disabled = true;
     ambil(pin, function (d) {
       PIN = pin; simpan.set($('ingat').checked ? pin : '');
       tampil(d);
@@ -268,7 +268,7 @@
     DATA = d;
     $('v-login').hidden = true; $('v-dash').hidden = false;
     $('co').textContent = d.perusahaan || '';
-    document.title = 'Stok Gudang · ' + (d.perusahaan || '');
+    document.title = 'Stok Gudang Â· ' + (d.perusahaan || '');
     kesegaran(); gambarStok(); gambarKpi(); gambarTabs(); gambarTabel();
     clearInterval(timer); timer = setInterval(muatUlang, 120000);  // muat ulang tiap 2 menit
   }
@@ -282,7 +282,7 @@
       teks += menit < 1 ? ' (baru saja)' : menit < 60 ? ` (${menit} menit lalu)` : ` (${Math.floor(menit / 60)} jam lalu)`;
       telat = menit > 120;
     }
-    $('fresh').textContent = teks + ' · dari komputer gudang';
+    $('fresh').textContent = teks + ' Â· dari komputer gudang';
     $('dot').style.background = telat ? 'var(--warn)' : 'var(--ok)';
     $('banner').hidden = !telat;
     $('banner').textContent = 'Data belum diperbarui lebih dari 2 jam. Komputer gudang mungkin mati, offline, atau aplikasinya ditutup.';
@@ -302,7 +302,7 @@
       .sort((a, b) => keluar(b.r) - keluar(a.r) || a.i - b.i)
       .slice(0, 3).map((x) => x.r);
     $('stok-judul').innerHTML = dipilih.length ? 'Stok barang utama'
-      : 'Stok barang terlaris <span class="h2sub">· 30 hari terakhir</span>';
+      : 'Stok barang terlaris <span class="h2sub">Â· 30 hari terakhir</span>';
     $('stok').innerHTML = pilih.map(function (r) {
       // [kode, nama, satuan, stok, min, status, keterangan, dijual sebagai, keluar 30 hari]
       const st = r[5], cls = st === 'Habis' ? 'bad' : st === 'Menipis' ? 'warn' : '';
@@ -388,14 +388,14 @@
         + (iSub >= 0 && r[iSub] ? `<div class="rc-s">${esc(r[iSub])}</div>` : '') + (dl ? `<dl>${dl}</dl>` : '') + '</div>';
     }).join('');
     $('cards').innerHTML = kartu || `<div class="rc kosong">${q ? 'Tidak ada yang cocok dengan "' + esc(q) + '".' : 'Belum ada data.'}</div>`;
-    $('ket').textContent = (s.keterangan || '').split(' · ')[0].startsWith('Diperbarui') ? '' : (s.keterangan || '').split(' · ')[0];
+    $('ket').textContent = (s.keterangan || '').split(' Â· ')[0].startsWith('Diperbarui') ? '' : (s.keterangan || '').split(' Â· ')[0];
   }
 
   // ---------------- mulai
   const tersimpan = simpan.get();
   if (tersimpan) {
     $('pin').value = tersimpan;
-    $('b-masuk').textContent = 'Memuat…'; $('b-masuk').disabled = true;
+    $('b-masuk').textContent = 'MemuatÂ…'; $('b-masuk').disabled = true;
     ambil(tersimpan, function (d) { PIN = tersimpan; tampil(d); }, function (msg) {
       simpan.set(''); $('pin').value = ''; $('b-masuk').textContent = 'Masuk'; $('b-masuk').disabled = false;
       $('login-err').textContent = msg;
