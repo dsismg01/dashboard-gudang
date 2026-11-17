@@ -5,6 +5,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stok Gudang</title>
+<!-- bisa dipasang sebagai aplikasi (ikon di desktop / HP) bila dibuka dari GitHub Pages -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#22303a">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gudang">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -88,6 +95,11 @@
   .k .v { font-size: 24px; font-weight: 800; margin-top: 4px; overflow-wrap: anywhere; }
   .k .s { font-size: 12px; color: #9fb0bb; margin-top: 2px; }
   .k.acc .v { color: var(--accent); }
+  .k .lbl-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .mata { border: 0; background: rgba(255,255,255,.1); color: #c9d3da; border-radius: 8px; padding: 4px 8px;
+          display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+  .mata:hover { background: rgba(255,255,255,.18); color: #fff; }
+  .mata svg { width: 15px; height: 15px; }
 
   /* ---------- tab & tabel ---------- */
   .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 24px 0 10px; }
@@ -170,7 +182,7 @@
     <div class="banner" id="banner" hidden></div>
 
     <div class="h2row"><h2 id="stok-judul">Stok barang terlaris <span class="h2sub">· 30 hari terakhir</span></h2>
-      <button class="linkbtn" id="stok-semua" type="button" hidden>Lihat semua barang ?</button></div>
+      <button class="linkbtn" id="stok-semua" type="button" hidden>Lihat semua barang →</button></div>
     <div class="stok-grid" id="stok"></div>
 
     <h2>Ringkasan</h2>
@@ -178,7 +190,7 @@
 
     <div class="bar">
       <div class="tabs" id="tabs" role="tablist"></div>
-      <input class="cari" id="cari" type="search" placeholder="Cari customer, nomor, barang" aria-label="Cari">
+      <input class="cari" id="cari" type="search" placeholder="Cari customer, nomor, barang…" aria-label="Cari">
     </div>
     <div class="tbl-wrap"><table id="tbl"></table></div>
     <div class="cards" id="cards"></div>
@@ -195,6 +207,17 @@
   const TAB_URUT = ['Barang Keluar', 'Belum Ditagih', 'Barang Masuk', 'Invoice', 'Per Customer Bulan Ini', 'Stok'];
   let PIN = '', DATA = null, TAB = 'Barang Keluar', timer = null;
 
+  // nilai "Invoice bulan ini" bisa disembunyikan; pilihan diingat di perangkat ini
+  const tutup = {
+    get() { try { return localStorage.getItem('gudang_tutup_invoice') === '1'; } catch (e) { return false; } },
+    set(v) { try { localStorage.setItem('gudang_tutup_invoice', v ? '1' : '0'); } catch (e) {} }
+  };
+  const MATA_TUTUP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2.5 12S6 19 12 19a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  const MATA_BUKA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  // GitHub Pages: aktifkan service worker supaya dashboard bisa di-install (ikon desktop) & tampil walau sinyal putus
+  if (!(window.google && google.script) && 'serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
   const simpan = {
     get() { try { return localStorage.getItem('gudang_pin') || ''; } catch (e) { return ''; } },
     set(v) { try { v ? localStorage.setItem('gudang_pin', v) : localStorage.removeItem('gudang_pin'); } catch (e) {} }
@@ -204,7 +227,7 @@
   const rp = (v) => (typeof v === 'number' ? 'Rp ' + fmt.format(Math.round(v)) : esc(v));
   const tgl = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? `${+m[3]} ${BULAN[+m[2]-1]} ${m[1]}` : esc(s); };
 
-  // Di Apps Script: google.script.run. Di GitHub Pages / hosting lain: minta ke link web app (/exec) dengan PIN.
+  // Di Apps Script: google.script.run. Di GitHub Pages / hosting lain: minta ke link web app (…/exec) dengan PIN.
   const API = 'https://script.google.com/macros/s/AKfycbxCUd2wioH2ymly63JItniEFAYCD2Z3xDd75oT2XdOYDO2vyLLgXEaEBlaJv-RBrl2D9A/exec';
   function ambil(pin, onOk, onErr) {
     const hasil = function (res) {
@@ -225,7 +248,7 @@
       .then(function (r) { return r.json(); })
       .then(hasil)
       .catch(function () { onErr('Tidak bisa terhubung ke Google. Pastikan Code.gs sudah versi terbaru ' +
-                                 '(Deploy ? Manage deployments ? New version).'); });
+                                 '(Deploy → Manage deployments → New version).'); });
   }
 
   // ---------------- login
@@ -233,7 +256,7 @@
     ev.preventDefault();
     const pin = $('pin').value.trim();
     $('login-err').textContent = '';
-    $('b-masuk').textContent = 'Memeriksa'; $('b-masuk').disabled = true;
+    $('b-masuk').textContent = 'Memeriksa…'; $('b-masuk').disabled = true;
     ambil(pin, function (d) {
       PIN = pin; simpan.set($('ingat').checked ? pin : '');
       tampil(d);
@@ -314,7 +337,7 @@
     }).join('') || '<div class="kosong">Belum ada barang gudang.</div>';
     const lain = s.baris.length - pilih.length;
     $('stok-semua').hidden = lain <= 0;
-    $('stok-semua').textContent = `Lihat semua ${s.baris.length} barang ?`;
+    $('stok-semua').textContent = `Lihat semua ${s.baris.length} barang →`;
   }
 
   function gambarKpi() {
@@ -332,8 +355,13 @@
         <div class="s num">${fmt.format(qty)} barang keluar</div></div>
       <div class="k"><div class="lbl">Belum ditagih</div><div class="v num">${fmt.format(bt.length)} SJ</div>
         <div class="s">${bt.length ? 'tertua ' + tertua + ' hari' : 'semua sudah ditagih'}</div></div>
-      <div class="k acc"><div class="lbl">Invoice bulan ini</div><div class="v num">${rp(omzet)}</div>
-        <div class="s">${inv.length} invoice, termasuk PPN</div></div>`;
+      <div class="k acc"><div class="lbl-row"><div class="lbl">Invoice bulan ini</div>
+          <button class="mata" id="b-mata" type="button" aria-pressed="${tutup.get()}"
+                  title="${tutup.get() ? 'Tampilkan' : 'Sembunyikan'} nilai invoice">${tutup.get() ? MATA_BUKA : MATA_TUTUP}
+            <span>${tutup.get() ? 'Tampilkan' : 'Sembunyikan'}</span></button></div>
+        <div class="v num">${tutup.get() ? 'Rp ••••••••' : rp(omzet)}</div>
+        <div class="s">${tutup.get() ? 'nilai disembunyikan' : inv.length + ' invoice, termasuk PPN'}</div></div>`;
+    $('b-mata').addEventListener('click', function () { tutup.set(!tutup.get()); gambarKpi(); });
   }
 
   function gambarTabs() {
@@ -395,7 +423,7 @@
   const tersimpan = simpan.get();
   if (tersimpan) {
     $('pin').value = tersimpan;
-    $('b-masuk').textContent = 'Memuat'; $('b-masuk').disabled = true;
+    $('b-masuk').textContent = 'Memuat…'; $('b-masuk').disabled = true;
     ambil(tersimpan, function (d) { PIN = tersimpan; tampil(d); }, function (msg) {
       simpan.set(''); $('pin').value = ''; $('b-masuk').textContent = 'Masuk'; $('b-masuk').disabled = false;
       $('login-err').textContent = msg;
