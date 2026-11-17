@@ -1,6 +1,6 @@
 // Service worker dashboard gudang: tampilan (index.html, ikon) disimpan supaya aplikasi bisa di-install
 // dan tetap terbuka walau sinyal putus. Data stok TIDAK disimpan di sini: selalu diambil baru dari Google dengan PIN.
-const CACHE = 'gudang-v1';
+const CACHE = 'gudang-v2';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'favicon.png'];
 
 self.addEventListener('install', (e) => {
